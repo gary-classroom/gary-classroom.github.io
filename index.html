@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>课堂随机点名系统</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #18202a;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --success: #16a34a;
+      --danger: #dc2626;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 40px;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 0 0 8px;
+      font-size: 34px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 26px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .count {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .result {
+      min-height: 260px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: #f9fafb;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .result-label {
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    #pickedName {
+      font-size: 54px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+
+    #pickedInfo {
+      color: var(--muted);
+    }
+
+    .buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-size: 17px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .primary {
+      flex: 1;
+      background: var(--primary);
+      color: white;
+      font-weight: bold;
+    }
+
+    .primary:hover:not(:disabled) {
+      background: var(--primary-dark);
+    }
+
+    .secondary {
+      background: #eef2ff;
+      color: #1e40af;
+    }
+
+    .history-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .history {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .history-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: #fafafa;
+    }
+
+    .history-item strong {
+      display: block;
+      margin-top: 3px;
+      font-size: 17px;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 30px 0;
+    }
+
+    .rules {
+      margin-top: 18px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .complete {
+      color: var(--success);
+      font-weight: bold;
+    }
+
+    @media (max-width: 760px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      #pickedName {
+        font-size: 42px;
+      }
+
+      .buttons {
+        flex-direction: column;
+      }
+
+      .secondary {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>课堂随机点名系统</h1>
+    <div class="subtitle">每位同学一轮只会被抽中一次</div>
+
+    <div class="layout">
+      <section class="card">
+        <div class="topbar">
+          <div>
+            <div class="muted">本轮剩余</div>
+            <div class="count"><span id="remainingCount">28</span> / 28 人</div>
+          </div>
+          <button id="resetBtn" class="secondary" type="button">重新开始</button>
+        </div>
+
+        <div class="result">
+          <div class="result-label">当前抽中</div>
+          <div id="pickedName">准备点名</div>
+          <div id="pickedInfo">点击下方按钮开始</div>
+        </div>
+
+        <div class="buttons">
+          <button id="pickBtn" class="primary" type="button">随机点名</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="history-title">
+          <strong>已点名单</strong>
+          <span class="muted"><span id="pickedCount">0</span> 人</span>
+        </div>
+        <div id="history" class="history"></div>
+        <div id="emptyHistory" class="empty">还没有点到任何同学</div>
+      </section>
+    </div>
+
+    <div class="rules">
+      规则：点击“随机点名”后，系统会从尚未被抽中的学生中随机选择 1 人。
+      已经被抽中的学生不会再次出现。28 人全部点完后，点击“重新开始”进入下一轮。
+    </div>
+  </div>
+
+  <script>
+    const students = [
+      { no: 1, name: "吴双" },
+      { no: 2, name: "王宇巍" },
+      { no: 3, name: "孟维炜" },
+      { no: 4, name: "朱媛熙" },
+      { no: 5, name: "王鑫桐" },
+      { no: 6, name: "宋冰悦" },
+      { no: 7, name: "龙文灏" },
+      { no: 8, name: "刘昊伦" },
+      { no: 9, name: "李初阳" },
+      { no: 10, name: "韩雨琪" },
+      { no: 11, name: "葛济瑄" },
+      { no: 12, name: "房楷淇" },
+      { no: 13, name: "邱子秋" },
+      { no: 14, name: "张茗曦" },
+      { no: 15, name: "王岳潼" },
+      { no: 16, name: "王一笑" },
+      { no: 17, name: "沈诗棋" },
+      { no: 18, name: "钮楚洋" },
+      { no: 19, name: "米天泽" },
+      { no: 20, name: "李佳彤" },
+      { no: 21, name: "胡晓荞" },
+      { no: 22, name: "龚子轩" },
+      { no: 23, name: "刘笑渤" },
+      { no: 24, name: "赵子彤" },
+      { no: 25, name: "吕奕宁" },
+      { no: 26, name: "白焕阳" },
+      { no: 27, name: "陈韵雯" },
+      { no: 28, name: "孔靖语" }
+    ];
+
+    let remaining = [...students];
+    let picked = [];
+
+    const pickBtn = document.getElementById("pickBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const pickedName = document.getElementById("pickedName");
+    const pickedInfo = document.getElementById("pickedInfo");
+    const remainingCount = document.getElementById("remainingCount");
+    const pickedCount = document.getElementById("pickedCount");
+    const history = document.getElementById("history");
+    const emptyHistory = document.getElementById("emptyHistory");
+
+    function render() {
+      remainingCount.textContent = remaining.length;
+      pickedCount.textContent = picked.length;
+
+      history.innerHTML = "";
+      emptyHistory.style.display = picked.length ? "none" : "block";
+
+      picked.forEach((student, index) => {
+        const item = document.createElement("div");
+        item.className = "history-item";
+        item.innerHTML = `
+          <span class="muted">第 ${index + 1} 位 · ${student.no}号</span>
+          <strong>${student.name}</strong>
+        `;
+        history.appendChild(item);
+      });
+
+      if (remaining.length === 0) {
+        pickBtn.disabled = true;
+        pickBtn.textContent = "本轮已全部点完";
+        pickedInfo.innerHTML = '<span class="complete">28 人已全部完成</span>';
+      } else {
+        pickBtn.disabled = false;
+        pickBtn.textContent = "随机点名";
+      }
+    }
+
+    pickBtn.addEventListener("click", () => {
+      if (remaining.length === 0) return;
+
+      const randomIndex = Math.floor(Math.random() * remaining.length);
+      const student = remaining.splice(randomIndex, 1)[0];
+      picked.push(student);
+
+      pickedName.textContent = student.name;
+      pickedInfo.textContent = `${student.no}号 · 本轮不会再次被抽中`;
+
+      render();
+    });
+
+    resetBtn.addEventListener("click", () => {
+      remaining = [...students];
+      picked = [];
+      pickedName.textContent = "准备点名";
+      pickedInfo.textContent = "点击下方按钮开始";
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
