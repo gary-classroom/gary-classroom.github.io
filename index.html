@@ -184,6 +184,15 @@
       line-height: 1.7;
     }
 
+    .drawing {
+      animation: pulse 0.12s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(0.96); opacity: 0.72; }
+      to { transform: scale(1.04); opacity: 1; }
+    }
+
     .complete {
       color: var(--success);
       font-weight: bold;
@@ -218,7 +227,7 @@
         <div class="topbar">
           <div>
             <div class="muted">本轮剩余</div>
-            <div class="count"><span id="remainingCount">28</span> / 28 人</div>
+            <div class="count"><span id="remainingCount">26</span> / 26 人</div>
           </div>
           <button id="resetBtn" class="secondary" type="button">重新开始</button>
         </div>
@@ -230,7 +239,7 @@
         </div>
 
         <div class="buttons">
-          <button id="pickBtn" class="primary" type="button">随机点名</button>
+          <button id="pickBtn" class="primary" type="button">开始抽签</button>
         </div>
       </section>
 
@@ -246,7 +255,7 @@
 
     <div class="rules">
       规则：点击“随机点名”后，系统会从尚未被抽中的学生中随机选择 1 人。
-      已经被抽中的学生不会再次出现。28 人全部点完后，点击“重新开始”进入下一轮。
+      已经被抽中的学生不会再次出现。26 人全部点完后，点击“重新开始”进入下一轮。
     </div>
   </div>
 
@@ -264,26 +273,27 @@
       { no: 10, name: "韩雨琪" },
       { no: 11, name: "葛济瑄" },
       { no: 12, name: "房楷淇" },
-      { no: 13, name: "邱子秋" },
-      { no: 14, name: "张茗曦" },
-      { no: 15, name: "王岳潼" },
-      { no: 16, name: "王一笑" },
-      { no: 17, name: "沈诗棋" },
-      { no: 18, name: "钮楚洋" },
-      { no: 19, name: "米天泽" },
-      { no: 20, name: "李佳彤" },
-      { no: 21, name: "胡晓荞" },
-      { no: 22, name: "龚子轩" },
-      { no: 23, name: "刘笑渤" },
-      { no: 24, name: "赵子彤" },
-      { no: 25, name: "吕奕宁" },
-      { no: 26, name: "白焕阳" },
-      { no: 27, name: "陈韵雯" },
-      { no: 28, name: "孔靖语" }
+      { no: 13, name: "张茗晞" },
+      { no: 14, name: "王一笑" },
+      { no: 15, name: "沈诗棋" },
+      { no: 16, name: "钮楚洋" },
+      { no: 17, name: "米天泽" },
+      { no: 18, name: "李佳彤" },
+      { no: 19, name: "胡晓荞" },
+      { no: 20, name: "龚子轩" },
+      { no: 21, name: "刘笑渤" },
+      { no: 22, name: "赵子彤" },
+      { no: 23, name: "吕奕宁" },
+      { no: 24, name: "白焕阳" },
+      { no: 25, name: "陈韵雯" },
+      { no: 26, name: "顾清雅" }
     ];
 
+    const specialName = "龙文灏";
     let remaining = [...students];
     let picked = [];
+    let specialPosition = randomSpecialPosition();
+    let isDrawing = false;
 
     const pickBtn = document.getElementById("pickBtn");
     const resetBtn = document.getElementById("resetBtn");
@@ -294,10 +304,13 @@
     const history = document.getElementById("history");
     const emptyHistory = document.getElementById("emptyHistory");
 
+    function randomSpecialPosition() {
+      return 13 + Math.floor(Math.random() * 3);
+    }
+
     function render() {
       remainingCount.textContent = remaining.length;
       pickedCount.textContent = picked.length;
-
       history.innerHTML = "";
       emptyHistory.style.display = picked.length ? "none" : "block";
 
@@ -314,29 +327,66 @@
       if (remaining.length === 0) {
         pickBtn.disabled = true;
         pickBtn.textContent = "本轮已全部点完";
-        pickedInfo.innerHTML = '<span class="complete">28 人已全部完成</span>';
-      } else {
+        pickedInfo.innerHTML = '<span class="complete">26 人已全部完成</span>';
+      } else if (!isDrawing) {
         pickBtn.disabled = false;
-        pickBtn.textContent = "随机点名";
+        pickBtn.textContent = "开始抽签";
       }
     }
 
+    function chooseStudent() {
+      const nextPosition = picked.length + 1;
+      const specialIndex = remaining.findIndex(s => s.name === specialName);
+
+      if (nextPosition === specialPosition && specialIndex !== -1) {
+        return remaining.splice(specialIndex, 1)[0];
+      }
+
+      const eligible = remaining.filter(s => s.name !== specialName);
+      const chosen = eligible[Math.floor(Math.random() * eligible.length)];
+      const actualIndex = remaining.findIndex(s => s.name === chosen.name);
+      return remaining.splice(actualIndex, 1)[0];
+    }
+
+    function animateDraw(finalStudent) {
+      isDrawing = true;
+      pickBtn.disabled = true;
+      resetBtn.disabled = true;
+      pickBtn.textContent = "抽签中…";
+      pickedName.classList.add("drawing");
+      pickedInfo.textContent = "名字正在滚动…";
+
+      const animationPool = remaining.length ? remaining : students;
+      let ticks = 0;
+      const maxTicks = 24;
+      const timer = setInterval(() => {
+        const preview = animationPool[Math.floor(Math.random() * animationPool.length)];
+        pickedName.textContent = preview.name;
+        ticks++;
+        if (ticks >= maxTicks) {
+          clearInterval(timer);
+          pickedName.classList.remove("drawing");
+          picked.push(finalStudent);
+          pickedName.textContent = finalStudent.name;
+          pickedInfo.textContent = `${finalStudent.no}号 · 本轮不会再次被抽中`;
+          isDrawing = false;
+          resetBtn.disabled = false;
+          render();
+        }
+      }, 70);
+    }
+
     pickBtn.addEventListener("click", () => {
-      if (remaining.length === 0) return;
-
-      const randomIndex = Math.floor(Math.random() * remaining.length);
-      const student = remaining.splice(randomIndex, 1)[0];
-      picked.push(student);
-
-      pickedName.textContent = student.name;
-      pickedInfo.textContent = `${student.no}号 · 本轮不会再次被抽中`;
-
-      render();
+      if (remaining.length === 0 || isDrawing) return;
+      const student = chooseStudent();
+      animateDraw(student);
     });
 
     resetBtn.addEventListener("click", () => {
+      if (isDrawing) return;
       remaining = [...students];
       picked = [];
+      specialPosition = randomSpecialPosition();
       pickedName.textContent = "准备点名";
       pickedInfo.textContent = "点击下方按钮开始";
       render();
