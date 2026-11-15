@@ -1,398 +1,51 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>课堂随机点名系统</title>
-  <style>
-    :root {
-      --bg: #f5f7fb;
-      --card: #ffffff;
-      --text: #18202a;
-      --muted: #6b7280;
-      --border: #e5e7eb;
-      --primary: #2563eb;
-      --primary-dark: #1d4ed8;
-      --success: #16a34a;
-      --danger: #dc2626;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Arial, "Microsoft YaHei", sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    .page {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 28px 18px 40px;
-    }
-
-    h1 {
-      text-align: center;
-      margin: 0 0 8px;
-      font-size: 34px;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: var(--muted);
-      margin-bottom: 26px;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 18px;
-      align-items: start;
-    }
-
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 20px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.04);
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-
-    .count {
-      font-size: 20px;
-      font-weight: bold;
-    }
-
-    .muted {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .result {
-      min-height: 260px;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      background: #f9fafb;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 24px;
-    }
-
-    .result-label {
-      color: var(--muted);
-      margin-bottom: 10px;
-    }
-
-    #pickedName {
-      font-size: 54px;
-      font-weight: 800;
-      letter-spacing: 2px;
-      margin-bottom: 10px;
-    }
-
-    #pickedInfo {
-      color: var(--muted);
-    }
-
-    .buttons {
-      display: flex;
-      gap: 12px;
-      margin-top: 18px;
-    }
-
-    button {
-      border: none;
-      border-radius: 12px;
-      padding: 14px 20px;
-      font-size: 17px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .primary {
-      flex: 1;
-      background: var(--primary);
-      color: white;
-      font-weight: bold;
-    }
-
-    .primary:hover:not(:disabled) {
-      background: var(--primary-dark);
-    }
-
-    .secondary {
-      background: #eef2ff;
-      color: #1e40af;
-    }
-
-    .history-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .history {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .history-item {
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px 12px;
-      background: #fafafa;
-    }
-
-    .history-item strong {
-      display: block;
-      margin-top: 3px;
-      font-size: 17px;
-    }
-
-    .empty {
-      text-align: center;
-      color: var(--muted);
-      padding: 30px 0;
-    }
-
-    .rules {
-      margin-top: 18px;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px 16px;
-      color: var(--muted);
-      line-height: 1.7;
-    }
-
-    .drawing {
-      animation: pulse 0.12s infinite alternate;
-    }
-
-    @keyframes pulse {
-      from { transform: scale(0.96); opacity: 0.72; }
-      to { transform: scale(1.04); opacity: 1; }
-    }
-
-    .complete {
-      color: var(--success);
-      font-weight: bold;
-    }
-
-    @media (max-width: 760px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-
-      #pickedName {
-        font-size: 42px;
-      }
-
-      .buttons {
-        flex-direction: column;
-      }
-
-      .secondary {
-        width: 100%;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="page">
-    <h1>课堂随机点名系统</h1>
-    <div class="subtitle">每位同学一轮只会被抽中一次</div>
-
-    <div class="layout">
-      <section class="card">
-        <div class="topbar">
-          <div>
-            <div class="muted">本轮剩余</div>
-            <div class="count"><span id="remainingCount">26</span> / 26 人</div>
-          </div>
-          <button id="resetBtn" class="secondary" type="button">重新开始</button>
-        </div>
-
-        <div class="result">
-          <div class="result-label">当前抽中</div>
-          <div id="pickedName">准备点名</div>
-          <div id="pickedInfo">点击下方按钮开始</div>
-        </div>
-
-        <div class="buttons">
-          <button id="pickBtn" class="primary" type="button">开始抽签</button>
-        </div>
-      </section>
-
-      <section class="card">
-        <div class="history-title">
-          <strong>已点名单</strong>
-          <span class="muted"><span id="pickedCount">0</span> 人</span>
-        </div>
-        <div id="history" class="history"></div>
-        <div id="emptyHistory" class="empty">还没有点到任何同学</div>
-      </section>
-    </div>
-
-    <div class="rules">
-      规则：点击“随机点名”后，系统会从尚未被抽中的学生中随机选择 1 人。
-      已经被抽中的学生不会再次出现。26 人全部点完后，点击“重新开始”进入下一轮。
-    </div>
-  </div>
-
-  <script>
-    const students = [
-      { no: 1, name: "吴双" },
-      { no: 2, name: "王宇巍" },
-      { no: 3, name: "孟维炜" },
-      { no: 4, name: "朱媛熙" },
-      { no: 5, name: "王鑫桐" },
-      { no: 6, name: "宋冰悦" },
-      { no: 7, name: "龙文灏" },
-      { no: 8, name: "刘昊伦" },
-      { no: 9, name: "李初阳" },
-      { no: 10, name: "韩雨琪" },
-      { no: 11, name: "葛济瑄" },
-      { no: 12, name: "房楷淇" },
-      { no: 13, name: "张茗晞" },
-      { no: 14, name: "王一笑" },
-      { no: 15, name: "沈诗棋" },
-      { no: 16, name: "钮楚洋" },
-      { no: 17, name: "米天泽" },
-      { no: 18, name: "李佳彤" },
-      { no: 19, name: "胡晓荞" },
-      { no: 20, name: "龚子轩" },
-      { no: 21, name: "刘笑渤" },
-      { no: 22, name: "赵子彤" },
-      { no: 23, name: "吕奕宁" },
-      { no: 24, name: "白焕阳" },
-      { no: 25, name: "陈韵雯" },
-      { no: 26, name: "顾清雅" }
-    ];
-
-    const specialName = "龙文灏";
-    let remaining = [...students];
-    let picked = [];
-    let specialPosition = randomSpecialPosition();
-    let isDrawing = false;
-
-    const pickBtn = document.getElementById("pickBtn");
-    const resetBtn = document.getElementById("resetBtn");
-    const pickedName = document.getElementById("pickedName");
-    const pickedInfo = document.getElementById("pickedInfo");
-    const remainingCount = document.getElementById("remainingCount");
-    const pickedCount = document.getElementById("pickedCount");
-    const history = document.getElementById("history");
-    const emptyHistory = document.getElementById("emptyHistory");
-
-    function randomSpecialPosition() {
-      return 13 + Math.floor(Math.random() * 3);
-    }
-
-    function render() {
-      remainingCount.textContent = remaining.length;
-      pickedCount.textContent = picked.length;
-      history.innerHTML = "";
-      emptyHistory.style.display = picked.length ? "none" : "block";
-
-      picked.forEach((student, index) => {
-        const item = document.createElement("div");
-        item.className = "history-item";
-        item.innerHTML = `
-          <span class="muted">第 ${index + 1} 位 · ${student.no}号</span>
-          <strong>${student.name}</strong>
-        `;
-        history.appendChild(item);
-      });
-
-      if (remaining.length === 0) {
-        pickBtn.disabled = true;
-        pickBtn.textContent = "本轮已全部点完";
-        pickedInfo.innerHTML = '<span class="complete">26 人已全部完成</span>';
-      } else if (!isDrawing) {
-        pickBtn.disabled = false;
-        pickBtn.textContent = "开始抽签";
-      }
-    }
-
-    function chooseStudent() {
-      const nextPosition = picked.length + 1;
-      const specialIndex = remaining.findIndex(s => s.name === specialName);
-
-      if (nextPosition === specialPosition && specialIndex !== -1) {
-        return remaining.splice(specialIndex, 1)[0];
-      }
-
-      const eligible = remaining.filter(s => s.name !== specialName);
-      const chosen = eligible[Math.floor(Math.random() * eligible.length)];
-      const actualIndex = remaining.findIndex(s => s.name === chosen.name);
-      return remaining.splice(actualIndex, 1)[0];
-    }
-
-    function animateDraw(finalStudent) {
-      isDrawing = true;
-      pickBtn.disabled = true;
-      resetBtn.disabled = true;
-      pickBtn.textContent = "抽签中…";
-      pickedName.classList.add("drawing");
-      pickedInfo.textContent = "名字正在滚动…";
-
-      const animationPool = remaining.length ? remaining : students;
-      let ticks = 0;
-      const maxTicks = 24;
-      const timer = setInterval(() => {
-        const preview = animationPool[Math.floor(Math.random() * animationPool.length)];
-        pickedName.textContent = preview.name;
-        ticks++;
-        if (ticks >= maxTicks) {
-          clearInterval(timer);
-          pickedName.classList.remove("drawing");
-          picked.push(finalStudent);
-          pickedName.textContent = finalStudent.name;
-          pickedInfo.textContent = `${finalStudent.no}号 · 本轮不会再次被抽中`;
-          isDrawing = false;
-          resetBtn.disabled = false;
-          render();
-        }
-      }, 70);
-    }
-
-    pickBtn.addEventListener("click", () => {
-      if (remaining.length === 0 || isDrawing) return;
-      const student = chooseStudent();
-      animateDraw(student);
-    });
-
-    resetBtn.addEventListener("click", () => {
-      if (isDrawing) return;
-      remaining = [...students];
-      picked = [];
-      specialPosition = randomSpecialPosition();
-      pickedName.textContent = "准备点名";
-      pickedInfo.textContent = "点击下方按钮开始";
-      render();
-    });
-
-    render();
-  </script>
-</body>
-</html>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>班级随机排座 V7 动画版</title><style>*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Microsoft YaHei',sans-serif;background:#f5f7fb;color:#192b43}header{background:#234c81;color:#fff;padding:17px 20px}h1{font-size:23px;margin:0}header p{margin:6px 0 0;font-size:13px;opacity:.9}main{max-width:1150px;margin:auto;padding:14px}.bar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.bar select{flex:1;min-width:210px}button,select{font:inherit;border-radius:9px;padding:11px 13px}button{border:0;background:#2867ae;color:white;cursor:pointer}button.alt{background:#e5edf7;color:#21476f}select{border:1px solid #cdd8e6;background:white}.columns{display:grid;grid-template-columns:1fr 1.2fr;gap:14px}.panel{background:#fff;padding:17px;border-radius:15px;min-width:0;box-shadow:0 2px 12px #162b4c0d}h2{font-size:19px;margin:0 0 14px}.big{font-size:40px;font-weight:700;color:#2867ae;text-align:center;min-height:105px;display:flex;align-items:center;justify-content:center}.actions{display:flex;gap:9px;flex-wrap:wrap}.actions button{flex:1}.hint{font-size:13px;color:#62748a;line-height:1.6}.board{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}.seat{border:1px solid #cbd7e7;background:#eff4fb;border-radius:7px;min-height:66px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;padding:3px;word-break:break-all}.seat.empty{background:#fafbfc;color:#a0adba;border-style:dashed}.seat.next{border:2px solid #ed9c22;background:#fff4df}.seat.preview{background:#ffe4a8;border:2px solid #f19a12;transform:scale(1.045)}.seat.fresh{background:#ccefe0;border:2px solid #18a16d}.big.rolling{color:#e57b15}.seat{transition:background .12s,transform .12s,border-color .12s}button:disabled{opacity:.48;cursor:not-allowed}.blackboard{background:#253b54;color:#fff;text-align:center;padding:9px;border-radius:7px;margin:0 30px 13px}.sides{display:flex;justify-content:space-between;font-size:12px;color:#536980;margin-bottom:10px}.status{font-size:14px;font-weight:600;margin:12px 0}.small{font-size:12px;color:#67788b}.chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}.chip{padding:5px 7px;background:#eef3f8;border-radius:5px;font-size:12px}.chip.done{background:#d9efe3;color:#206a43}details{margin-top:17px}summary{cursor:pointer;color:#526a84}#message{color:#bb4d25;font-size:13px;min-height:20px}@media(max-width:700px){.columns{grid-template-columns:1fr}.panel{padding:13px}.seat{min-height:57px;font-size:11px}.big{min-height:85px}}@media print{header,.bar,.left .actions,details,.extra,#message{display:none!important}.columns{display:block}.left{display:none}.panel{box-shadow:none}.seat{border:1px solid #777;background:white;color:black;min-height:80px}}</style></head><body><header><h1>班级随机排座</h1><p>25名学生 · 6列 × 5排 · 左窗右门</p></header><main><div class="bar"><select id="mode"><option value="full">完全随机 · 人名和座位都随机</option><option value="semi">半随机 · 人名随机，座位S型</option></select><button id="reset" class="alt">重新开始</button><button id="save" class="alt">保存</button><button id="restore" class="alt">恢复</button></div><div class="columns"><section class="panel left"><h2>随机点名</h2><div class="big" id="result">准备开始</div><div class="actions"><button id="draw">抽取并入座</button><button id="all" class="alt">动画排完25人</button></div><div class="status" id="count">已安排 0 / 25 人</div><div id="message"></div><details><summary>查看25名学生</summary><div class="chips" id="names"></div></details></section><section class="panel"><h2>座位表</h2><div class="blackboard">黑板 / 讲台</div><div class="sides"><span>☀ 左侧窗户</span><span>右侧门 🚪</span></div><div class="board" id="board"></div><p class="hint" id="desc"></p><p class="small">橙色表示正在抽取的候选座位，绿色表示刚刚确定的座位。</p><div class="actions extra"><button id="print" class="alt">打印</button><button id="export" class="alt">导出CSV</button></div></section></div></main><script>
+(function(){'use strict';
+var STUDENTS=['吴双','王宇巍','朱媛熙','王鑫桐','宋冰悦','龙文灏','刘昊伦','李初阳','韩雨琪','葛济瑄','房楷淇','张茗晞','王一笑','沈诗棋','钮楚洋','米天泽','李佳彤','龚子轩','刘笑渤','赵子彤','吕奕宁','白焕阳','陈韵雯','顾清雅','曹炳震'];
+var $=function(id){return document.getElementById(id)}, seats=[],route=[],remaining=[],assigned=0,mode='full',busy=false,preview=-1,fresh=-1,runToken=0;
+function shuffled(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
+function makeRoute(){var a=[],r,c;if(mode==='semi'){for(r=0;r<4;r++){if(r%2===0){for(c=0;c<6;c++)a.push(r*6+c)}else{for(c=5;c>=0;c--)a.push(r*6+c)}}a.push(24);return a}a=shuffled(Array.from({length:24},function(_,i){return i}));a.push(24+Math.floor(Math.random()*6));return shuffled(a)}
+function start(){runToken++;preview=-1;fresh=-1;mode=$('mode').value;seats=Array(30).fill('');route=makeRoute();remaining=STUDENTS.slice();assigned=0;busy=false;$('result').textContent='准备开始';$('message').textContent='';render()}
+function render(){var board=$('board');board.textContent='';for(var i=0;i<30;i++){var d=document.createElement('div');d.className='seat'+(seats[i]?'':' empty')+(preview===i?' preview':'')+(fresh===i?' fresh':'');d.textContent=seats[i]||((preview===i)?'随机中…':'空位');board.appendChild(d)}$('count').textContent='已安排 '+assigned+' / 25 人';$('draw').disabled=assigned===25||busy;$('all').disabled=assigned===25||busy;$('mode').disabled=busy;$('reset').disabled=busy;$('restore').disabled=busy;$('desc').textContent=mode==='semi'?'座位沿S型顺序，从黑板前方开始逐排安排；最后一排只有1人。':'前4排坐满，最后一排随机安排1人，其余5个座位空置。';var names=$('names');names.textContent='';STUDENTS.forEach(function(n){var s=document.createElement('span');s.className='chip'+(remaining.indexOf(n)<0?' done':'');s.textContent=n;names.appendChild(s)})}
+function sleep(ms){return new Promise(function(resolve){setTimeout(resolve,ms)})}
+async function drawAnimated(quick,token){
+ if(!remaining.length||token!==runToken)return;
+ var chosen=remaining[Math.floor(Math.random()*remaining.length)];
+ var target=route[assigned];
+ var available=route.slice(assigned);
+ var ticks=quick?7:24;
+ $('result').classList.add('rolling');
+ for(var k=0;k<ticks;k++){
+  if(token!==runToken)return;
+  var candidate=remaining[Math.floor(Math.random()*remaining.length)];
+  $('result').textContent=candidate;
+  preview=mode==='full'?available[Math.floor(Math.random()*available.length)]:target;
+  render();
+  await sleep(quick?45:Math.round(45+Math.pow(k/ticks,2)*170));
+ }
+ if(token!==runToken)return;
+ preview=-1;fresh=target;
+ remaining.splice(remaining.indexOf(chosen),1);
+ seats[target]=chosen;assigned++;
+ $('result').textContent=chosen;
+ $('result').classList.remove('rolling');
+ render();
+ await sleep(quick?90:430);
+ if(token!==runToken)return;
+ fresh=-1;render();
+}
+async function drawOne(){
+ if(busy||!remaining.length)return;
+ busy=true;render();var token=runToken;
+ try{await drawAnimated(false,token)}finally{if(token===runToken){busy=false;render()}}
+}
+async function all(){
+ if(busy||!remaining.length)return;
+ busy=true;render();var token=runToken;
+ try{while(remaining.length&&token===runToken)await drawAnimated(true,token)}finally{if(token===runToken){busy=false;render()}}
+}
+function save(){try{localStorage.setItem('seating_v6_20261115',JSON.stringify({seats:seats,route:route,remaining:remaining,assigned:assigned,mode:mode}));$('message').textContent='已保存到当前浏览器'}catch(e){$('message').textContent='当前浏览器禁止保存；可使用导出CSV'}}
+function restore(){try{var v=JSON.parse(localStorage.getItem('seating_v6_20261115'));if(!v||!Array.isArray(v.seats)||v.seats.length!==30||!Array.isArray(v.route)||v.route.length!==25||!Array.isArray(v.remaining)||typeof v.assigned!=='number')throw Error('invalid');seats=v.seats;route=v.route;remaining=v.remaining;assigned=v.assigned;mode=v.mode;$('mode').value=mode;runToken++;preview=-1;fresh=-1;busy=false;$('result').textContent=assigned?'已恢复座位':'准备开始';$('message').textContent='已恢复';render()}catch(e){$('message').textContent='没有找到可恢复的座位方案'}}
+function exportCsv(){var lines=[['排/列','第1列','第2列','第3列','第4列','第5列','第6列']];for(var r=0;r<5;r++)lines.push(['第'+(r+1)+'排'].concat(seats.slice(r*6,r*6+6).map(function(x){return x||'空位'})));var csv='\ufeff'+lines.map(function(row){return row.map(function(s){return '"'+String(s).replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');try{var blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='班级座位表.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},1000)}catch(e){$('message').textContent='当前预览器不支持下载，请在Safari或电脑浏览器打开'}}
+$('mode').addEventListener('change',start);$('reset').addEventListener('click',start);$('draw').addEventListener('click',drawOne);$('all').addEventListener('click',all);$('save').addEventListener('click',save);$('restore').addEventListener('click',restore);$('export').addEventListener('click',exportCsv);$('print').addEventListener('click',function(){window.print()});start();
+})();
+</script></body></html>
